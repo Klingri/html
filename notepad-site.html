@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Notepad</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #f0f4f8; /* Light gray background */
+        }
+        .notepad-container {
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 2rem); /* Full viewport height minus padding */
+            margin: 1rem auto; /* Center with vertical padding */
+            max-width: 960px; /* Max width for content */
+            width: 95%; /* Responsive width */
+            background-color: #ffffff; /* White background for notepad */
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        textarea {
+            flex-grow: 1; /* Make textarea fill available space */
+            resize: none; /* Disable manual resizing */
+            border: none;
+            outline: none;
+            padding: 1.5rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #334155; /* Slate-700 */
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* Monospace font */
+        }
+        .controls {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #e2e8f0; /* Light gray border */
+            display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap */
+            gap: 0.75rem; /* Gap between buttons */
+            justify-content: center;
+            align-items: center;
+        }
+        .btn {
+            padding: 0.6rem 1.2rem;
+            background-color: #3b82f6; /* Blue-500 */
+            color: white;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            min-width: 90px; /* Ensure buttons have a minimum width */
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #2563eb; /* Blue-600 */
+            transform: translateY(-1px);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .btn.clear {
+            background-color: #ef4444; /* Red-500 */
+        }
+        .btn.clear:hover {
+            background-color: #dc2626; /* Red-600 */
+        }
+        .status-bar {
+            padding: 0.75rem 1.5rem;
+            background-color: #e2e8f0; /* Light gray for status bar */
+            color: #475569; /* Slate-600 */
+            font-size: 0.875rem; /* text-sm */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #cbd5e1;
+            flex-wrap: wrap; /* Allow status info to wrap */
+            gap: 0.5rem;
+        }
+        .status-message {
+            flex-grow: 1; /* Allow message to take available space */
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Message Box Styling */
+        .message-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .message-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .message-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            color: #334155;
+            max-width: 380px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .message-modal.active .message-content {
+            transform: translateY(0);
+        }
+        .message-content h2 {
+            font-size: 1.75rem; /* text-2xl */
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #1e3a8a; /* Blue-800 */
+        }
+        .message-content p {
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            color: #475569; /* Slate-600 */
+        }
+        .message-content input {
+            width: calc(100% - 20px);
+            padding: 0.75rem 10px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1rem;
+            color: #334155;
+            box-sizing: border-box; /* Include padding in width */
+        }
+        .message-content .button-group {
+            display: flex;
+            justify-content: space-around;
+            gap: 1rem;
+        }
+        .message-content button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .message-content button.cancel {
+            background-color: #64748b; /* Slate-500 */
+        }
+        .message-content button:hover {
+            background-color: #2563eb;
+        }
+        .message-content button.cancel:hover {
+            background-color: #475569;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen">
+    <div class="notepad-container">
+        <h1 class="text-3xl font-bold text-gray-800 p-4 text-center">Web Notepad</h1>
+
+        <textarea id="notepad-textarea" placeholder="Start typing here..." class="flex-grow"></textarea>
+
+        <div class="status-bar">
+            <span>Words: <span id="word-count">0</span></span>
+            <span>Characters: <span id="char-count">0</span></span>
+            <span id="status-message" class="status-message text-blue-700">Ready</span>
+        </div>
+
+        <div class="controls">
+            <button id="new-btn" class="btn">New</button>
+            <button id="save-btn" class="btn">Save</button>
+            <input type="file" id="load-file-input" class="hidden" accept=".txt">
+            <button id="load-btn" class="btn">Load</button>
+            <button id="clear-btn" class="btn clear">Clear</button>
+        </div>
+    </div>
+
+    <!-- Message Box Modal -->
+    <div id="message-modal" class="message-modal">
+        <div class="message-content">
+            <h2 id="modal-title"></h2>
+            <p id="modal-text"></p>
+            <input type="text" id="modal-input" placeholder="Enter filename" class="hidden">
+            <div class="button-group">
+                <button id="modal-confirm-btn">OK</button>
+                <button id="modal-cancel-btn" class="cancel hidden">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const notepadTextarea = document.getElementById('notepad-textarea');
+        const wordCountSpan = document.getElementById('word-count');
+        const charCountSpan = document.getElementById('char-count');
+        const statusMessageSpan = document.getElementById('status-message');
+
+        const newButton = document.getElementById('new-btn');
+        const saveButton = document.getElementById('save-btn');
+        const loadFileInput = document.getElementById('load-file-input');
+        const loadButton = document.getElementById('load-btn');
+        const clearButton = document.getElementById('clear-btn');
+
+        // Message Modal Elements
+        const messageModal = document.getElementById('message-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalText = document.getElementById('modal-text');
+        const modalInput = document.getElementById('modal-input');
+        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+
+        // --- Global Variables ---
+        const LOCAL_STORAGE_KEY = 'webNotepadContent';
+        let statusMessageTimeout;
+
+        // --- Utility Functions ---
+
+        /**
+         * Displays a custom modal message box.
+         * @param {string} title - The title of the modal.
+         * @param {string} text - The main message text.
+         * @param {boolean} showInput - Whether to show the input field.
+         * @param {string} confirmText - Text for the confirm button.
+         * @param {function} onConfirm - Callback function when confirm is clicked (receives input value if showInput is true).
+         * @param {function} onCancel - Callback function when cancel is clicked.
+         */
+        function showCustomModal(title, text, showInput, confirmText, onConfirm, onCancel = null) {
+            modalTitle.textContent = title;
+            modalText.textContent = text;
+            modalConfirmBtn.textContent = confirmText;
+
+            if (showInput) {
+                modalInput.classList.remove('hidden');
+                modalInput.value = ''; // Clear previous input
+                modalInput.focus();
+            } else {
+                modalInput.classList.add('hidden');
+            }
+
+            if (onCancel) {
+                modalCancelBtn.classList.remove('hidden');
+            } else {
+                modalCancelBtn.classList.add('hidden');
+            }
+
+            // Remove existing listeners to prevent multiple calls
+            modalConfirmBtn.onclick = null;
+            modalCancelBtn.onclick = null;
+
+            modalConfirmBtn.onclick = () => {
+                messageModal.classList.remove('active');
+                onConfirm(showInput ? modalInput.value : null);
+            };
+
+            if (onCancel) {
+                modalCancelBtn.onclick = () => {
+                    messageModal.classList.remove('active');
+                    onCancel();
+                };
+            }
+
+            // Allow Enter key to confirm if input is visible
+            if (showInput) {
+                modalInput.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault(); // Prevent new line in input
+                        modalConfirmBtn.click();
+                    }
+                };
+            } else {
+                modalInput.onkeydown = null;
+            }
+
+            messageModal.classList.add('active');
+        }
+
+        /**
+         * Displays a temporary status message at the bottom.
+         * @param {string} message - The message to display.
+         * @param {string} type - 'success', 'error', 'info'.
+         */
+        function displayStatusMessage(message, type = 'info') {
+            statusMessageSpan.textContent = message;
+            statusMessageSpan.className = 'status-message'; // Reset classes
+
+            if (type === 'success') {
+                statusMessageSpan.classList.add('text-green-700');
+            } else if (type === 'error') {
+                statusMessageSpan.classList.add('text-red-700');
+            } else { // info or default
+                statusMessageSpan.classList.add('text-blue-700');
+            }
+
+            clearTimeout(statusMessageTimeout);
+            statusMessageTimeout = setTimeout(() => {
+                statusMessageSpan.textContent = 'Ready';
+                statusMessageSpan.className = 'status-message text-blue-700';
+            }, 3000);
+        }
+
+        /**
+         * Updates word and character counts.
+         */
+        function updateCounts() {
+            const text = notepadTextarea.value;
+            const charCount = text.length;
+            const wordCount = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+
+            charCountSpan.textContent = charCount;
+            wordCountSpan.textContent = wordCount;
+
+            // Auto-save to local storage on content change
+            localStorage.setItem(LOCAL_STORAGE_KEY, text);
+        }
+
+        // --- Core Notepad Functions ---
+
+        /**
+         * Clears the textarea content.
+         */
+        function newFile() {
+            if (notepadTextarea.value.trim() !== '') {
+                showCustomModal(
+                    'Create New File?',
+                    'Any unsaved changes will be lost. Do you want to create a new, empty file?',
+                    false,
+                    'New File',
+                    () => {
+                        notepadTextarea.value = '';
+                        updateCounts();
+                        displayStatusMessage('New file created.', 'success');
+                    },
+                    () => {
+                        displayStatusMessage('New file cancelled.', 'info');
+                    }
+                );
+            } else {
+                displayStatusMessage('Notepad is already empty.', 'info');
+            }
+        }
+
+        /**
+         * Prompts for a filename and downloads the textarea content as a .txt file.
+         */
+        function saveFile() {
+            const textToSave = notepadTextarea.value;
+            if (textToSave.trim() === '') {
+                displayStatusMessage('Nothing to save.', 'info');
+                return;
+            }
+
+            showCustomModal(
+                'Save File',
+                'Enter filename (e.g., my_notes.txt):',
+                true,
+                'Save',
+                (filename) => {
+                    filename = filename.trim();
+                    if (!filename) {
+                        filename = 'untitled.txt';
+                    } else if (!filename.toLowerCase().endsWith('.txt')) {
+                        filename += '.txt';
+                    }
+
+                    const blob = new Blob([textToSave], { type: 'text/plain' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = filename;
+                    document.body.appendChild(a); // Required for Firefox
+                    a.click();
+                    document.body.removeChild(a); // Clean up
+                    URL.revokeObjectURL(a.href); // Free up memory
+
+                    displayStatusMessage(`'${filename}' saved successfully.`, 'success');
+                },
+                () => {
+                    displayStatusMessage('Save operation cancelled.', 'info');
+                }
+            );
+        }
+
+        /**
+         * Triggers the hidden file input to allow user to select a file.
+         */
+        function loadFile() {
+            loadFileInput.click(); // Programmatically click the hidden file input
+        }
+
+        /**
+         * Handles the file selection and loads its content into the textarea.
+         * @param {Event} event - The change event from the file input.
+         */
+        function handleFileLoad(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                displayStatusMessage('No file selected.', 'info');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                notepadTextarea.value = e.target.result;
+                updateCounts();
+                displayStatusMessage(`'${file.name}' loaded successfully.`, 'success');
+            };
+            reader.onerror = () => {
+                displayStatusMessage('Error loading file.', 'error');
+            };
+            reader.readAsText(file);
+
+            // Clear the file input value to allow loading the same file again
+            event.target.value = '';
+        }
+
+        /**
+         * Prompts for confirmation before clearing the textarea.
+         */
+        function clearContent() {
+            if (notepadTextarea.value.trim() !== '') {
+                showCustomModal(
+                    'Clear Content?',
+                    'Are you sure you want to clear all content? This action cannot be undone.',
+                    false,
+                    'Clear All',
+                    () => {
+                        notepadTextarea.value = '';
+                        updateCounts();
+                        displayStatusMessage('Content cleared.', 'success');
+                    },
+                    () => {
+                        displayStatusMessage('Clear operation cancelled.', 'info');
+                    }
+                );
+            } else {
+                displayStatusMessage('Notepad is already empty.', 'info');
+            }
+        }
+
+        // --- Event Listeners ---
+        notepadTextarea.addEventListener('input', updateCounts);
+        newButton.addEventListener('click', newFile);
+        saveButton.addEventListener('click', saveFile);
+        loadButton.addEventListener('click', loadFile);
+        loadFileInput.addEventListener('change', handleFileLoad);
+        clearButton.addEventListener('click', clearContent);
+
+        // --- Initialization on Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load content from local storage on startup
+            const savedContent = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (savedContent !== null) {
+                notepadTextarea.value = savedContent;
+                displayStatusMessage('Content loaded from last session.', 'info');
+            }
+            updateCounts(); // Initial update of counts
+        });
+    </script>
+</body>
+</html>
