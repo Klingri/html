@@ -1,0 +1,370 @@
+/* --- 1. CSS Variables for Theming --- */
+:root {
+    /* Light Mode Defaults */
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --accent-color: #28a745;
+
+    --background-color: #f8f9fa;
+    --card-background: #ffffff;
+    --text-color: #343a40;
+    --heading-color: #212529;
+    --link-color: var(--primary-color);
+    --link-hover-color: #0056b3;
+    --border-color: #dee2e6;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+
+    --header-bg: #e9ecef;
+    --footer-bg: #e9ecef;
+    --button-bg: var(--primary-color);
+    --button-text: #ffffff;
+    --button-hover-bg: var(--link-hover-color);
+
+    --font-family-body: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-family-heading: 'Roboto', sans-serif; /* You might link Google Fonts for this */
+}
+
+body.dark-mode {
+    /* Dark Mode Overrides */
+    --primary-color: #8be9fd; /* Dracula theme blue */
+    --secondary-color: #bd93f9; /* Dracula theme purple */
+    --accent-color: #50fa7b; /* Dracula theme green */
+
+    --background-color: #282a36; /* Dracula background */
+    --card-background: #44475a; /* Dracula darker background */
+    --text-color: #f8f8f2; /* Dracula foreground */
+    --heading-color: #ff79c6; /* Dracula pink */
+    --link-color: var(--primary-color);
+    --link-hover-color: #6272a4; /* Dracula comment color */
+    --border-color: #6272a4;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+
+    --header-bg: #21222c;
+    --footer-bg: #21222c;
+    --button-bg: #6272a4;
+    --button-text: #f8f8f2;
+    --button-hover-bg: #4c5a7f;
+}
+
+/* --- 2. Base Styles & Resets --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth; /* Smooth scrolling for anchor links */
+}
+
+body {
+    font-family: var(--font-family-body);
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-family-heading);
+    color: var(--heading-color);
+    margin-bottom: 0.8em;
+    line-height: 1.2;
+}
+
+h1 { font-size: 2.8em; }
+h2 { font-size: 2.2em; }
+h3 { font-size: 1.8em; }
+h4 { font-size: 1.4em; }
+
+a {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--link-hover-color);
+}
+
+ul {
+    list-style: none;
+}
+
+/* --- 3. Utility Classes --- */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.button {
+    display: inline-block;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    padding: 12px 25px;
+    border-radius: 5px;
+    text-transform: uppercase;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.button:hover {
+    background-color: var(--button-hover-bg);
+    transform: translateY(-2px);
+}
+
+.card {
+    background-color: var(--card-background);
+    padding: 30px;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px var(--shadow-color);
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* --- 4. Layouts --- */
+.two-column-layout {
+    display: flex;
+    flex-wrap: wrap; /* Allows columns to wrap on smaller screens */
+    gap: 30px;
+}
+.two-column-layout > * {
+    flex: 1; /* Each child takes equal space */
+    min-width: 280px; /* Minimum width before wrapping */
+}
+
+.grid-layout {
+    display: grid;
+    gap: 30px;
+}
+.grid-layout.two-columns {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+.grid-layout.three-columns {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+
+/* --- 5. Component Specific Styles --- */
+/* Header */
+header {
+    background-color: var(--header-bg);
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px var(--shadow-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+}
+
+.logo a {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--heading-color);
+}
+
+nav ul {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+}
+
+nav a {
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+nav a:hover {
+    background-color: rgba(0, 0, 0, 0.05); /* subtle background on hover */
+}
+body.dark-mode nav a:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://via.placeholder.com/1920x600/3498db/ffffff?text=Hero+Image') no-repeat center center/cover;
+    color: #fff;
+    text-align: center;
+    padding: 100px 0;
+    margin-bottom: 30px; /* Space before next section */
+}
+
+.hero-section h2 {
+    color: #fff;
+    font-size: 3.5em;
+    margin-bottom: 15px;
+}
+
+.hero-section p {
+    font-size: 1.3em;
+    margin-bottom: 30px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Content Sections */
+.content-section {
+    padding: 50px 0; /* Add top/bottom padding to sections */
+    /* .card class already handles background, padding, shadow */
+}
+.content-section:last-child {
+    margin-bottom: 0; /* No margin after the last section before footer */
+}
+
+/* Form Styling */
+.contact-form .form-group {
+    margin-bottom: 20px;
+}
+
+.contact-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--heading-color);
+}
+
+.contact-form input[type="text"],
+.contact-form input[type="email"],
+.contact-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--card-background); /* Use card bg for input fields */
+    color: var(--text-color);
+    font-size: 1em;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.contact-form input[type="text"]:focus,
+.contact-form input[type="email"]:focus,
+.contact-form textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Footer */
+footer {
+    background-color: var(--footer-bg);
+    color: var(--text-color);
+    padding: 25px 0;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -2px 8px var(--shadow-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    font-size: 0.9em;
+}
+
+footer p {
+    margin-bottom: 10px;
+}
+
+.social-links a {
+    margin: 0 10px;
+    font-weight: normal;
+}
+
+/* Theme Toggle Button */
+.theme-toggle-button {
+    margin-left: 20px; /* Space from navigation links */
+}
+
+/* --- 6. Responsive Design (Media Queries) --- */
+@media (max-width: 992px) {
+    header .container {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+
+    nav ul {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+    }
+    .theme-toggle-button {
+        margin-left: 0;
+        margin-top: 15px;
+    }
+
+    .hero-section {
+        padding: 80px 0;
+    }
+    .hero-section h2 {
+        font-size: 3em;
+    }
+    .hero-section p {
+        font-size: 1.1em;
+    }
+
+    .card {
+        padding: 25px;
+    }
+
+    .content-section {
+        padding: 40px 0;
+    }
+}
+
+@media (max-width: 768px) {
+    h1 { font-size: 2.2em; }
+    h2 { font-size: 1.8em; }
+    h3 { font-size: 1.5em; }
+
+    .container {
+        padding: 0 15px;
+    }
+
+    .hero-section {
+        padding: 60px 0;
+    }
+    .hero-section h2 {
+        font-size: 2.5em;
+    }
+
+    .two-column-layout > *,
+    .grid-layout.two-columns,
+    .grid-layout.three-columns {
+        grid-template-columns: 1fr; /* Stack columns on smaller screens */
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 { font-size: 1.8em; }
+    h2 { font-size: 1.6em; }
+    h3 { font-size: 1.3em; }
+
+    nav ul {
+        flex-direction: column; /* Stack nav items */
+        gap: 10px;
+    }
+    nav a {
+        width: 100%; /* Make nav links full width */
+        padding: 10px;
+    }
+
+    .button {
+        padding: 10px 20px;
+        font-size: 0.9em;
+    }
+
+    .card {
+        padding: 20px;
+    }
+}
