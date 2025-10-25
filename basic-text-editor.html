@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Text Editor</title>
+    <!-- Use the Inter font for a clean, modern look -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
+    <!-- Load Tailwind CSS from CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Style the contenteditable div to look like a textarea */
+        .editor-content {
+            min-height: 400px;
+            padding: 1rem;
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            outline: none;
+            overflow-y: auto;
+            /* Allow custom styling for formatted text */
+            line-height: 1.6;
+        }
+        /* Add a focus state for the editor */
+        .editor-content:focus {
+            border-color: #3b82f6; /* blue-500 */
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 sm:p-6">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-4xl p-6 sm:p-8">
+        <!-- Main title -->
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 text-center mb-6">
+            Simple Text Editor
+        </h1>
+
+        <!-- Toolbar with formatting buttons -->
+        <div class="flex flex-wrap items-center gap-2 mb-4 p-2 bg-gray-50 rounded-lg border border-gray-200">
+            <!-- Bold button -->
+            <button id="bold-btn" class="px-3 py-1.5 font-bold text-sm bg-white text-gray-700 rounded-md border border-gray-300 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                Bold
+            </button>
+            <!-- Italic button -->
+            <button id="italic-btn" class="px-3 py-1.5 italic text-sm bg-white text-gray-700 rounded-md border border-gray-300 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                Italic
+            </button>
+            <!-- Underline button -->
+            <button id="underline-btn" class="px-3 py-1.5 underline text-sm bg-white text-gray-700 rounded-md border border-gray-300 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                Underline
+            </button>
+        </div>
+
+        <!-- The main editable content area -->
+        <div id="editor" contenteditable="true" class="editor-content text-gray-800">
+            Start typing here...
+        </div>
+
+        <!-- Status bar with word and character count -->
+        <div class="mt-4 text-sm text-gray-600 flex justify-between">
+            <span id="word-count">0 words</span>
+            <span id="char-count">0 characters</span>
+        </div>
+    </div>
+
+    <script>
+        // Get references to the editor and the display elements
+        const editor = document.getElementById('editor');
+        const wordCountSpan = document.getElementById('word-count');
+        const charCountSpan = document.getElementById('char-count');
+        const boldBtn = document.getElementById('bold-btn');
+        const italicBtn = document.getElementById('italic-btn');
+        const underlineBtn = document.getElementById('underline-btn');
+
+        // Function to update the word and character counts
+        const updateCounts = () => {
+            const text = editor.innerText.trim();
+            // Count characters including whitespace
+            charCountSpan.textContent = `${text.length} characters`;
+
+            // Count words by splitting the text. Filter out empty strings that may result from multiple spaces.
+            const words = text.split(/\s+/).filter(word => word.length > 0);
+            wordCountSpan.textContent = `${words.length} words`;
+        };
+
+        // Function to handle formatting commands
+        const applyFormatting = (command) => {
+            try {
+                // Check if a text selection exists before applying the command
+                const selection = window.getSelection();
+                if (selection.toString().length > 0) {
+                    document.execCommand(command, false, null);
+                }
+            } catch (error) {
+                console.error("Error applying formatting command:", error);
+            }
+        };
+
+        // Add event listeners for the formatting buttons
+        boldBtn.addEventListener('click', () => applyFormatting('bold'));
+        italicBtn.addEventListener('click', () => applyFormatting('italic'));
+        underlineBtn.addEventListener('click', () => applyFormatting('underline'));
+
+        // Add an input event listener to the editor to update counts in real-time
+        editor.addEventListener('input', updateCounts);
+
+        // Initial update when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCounts();
+        });
+    </script>
+</body>
+</html>
