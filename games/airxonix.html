@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebXonix</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #1a202c; /* Dark background */
+            display: flex;
+            flex-direction: column;
+            justify-center: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            overflow: hidden; /* Prevent scrolling */
+        }
+
+        .game-container {
+            background-color: #2d3748; /* Medium dark background for container */
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 90%;
+            width: fit-content;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            background-color: #000;
+            border: 4px solid #4a5568;
+            border-radius: 8px;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+            touch-action: none; /* Prevent default touch actions like scrolling/zooming */
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 1rem;
+            padding: 0.5rem 0;
+            color: #e2e8f0;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-bottom: 2px solid #4a5568;
+            border-top: 2px solid #4a5568;
+        }
+        .game-info span {
+            padding: 0 0.5rem;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+        }
+
+        .control-button {
+            padding: 0.75rem 1.5rem;
+            background-color: #4299e1; /* Blue-500 */
+            color: white;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-button:hover {
+            background-color: #3182ce; /* Blue-600 */
+            transform: translateY(-2px);
+        }
+
+        .control-button:active {
+            transform: translateY(0);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-button.restart {
+            background-color: #e53e3e; /* Red-500 */
+        }
+        .control-button.restart:hover {
+            background-color: #c53030; /* Red-600 */
+        }
+        .control-button.pause {
+            background-color: #ecc94b; /* Yellow-400 */
+            color: #2d3748;
+        }
+        .control-button.pause:hover {
+            background-color: #d69e2e; /* Yellow-500 */
+        }
+
+        /* Message Box Styling */
+        .message-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .message-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .message-content {
+            background-color: #2d3748;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            text-align: center;
+            color: #e2e8f0;
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .message-modal.active .message-content {
+            transform: translateY(0);
+        }
+        .message-content h2 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #63b3ed; /* Light blue for headings */
+        }
+        .message-content p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        .message-content button {
+            background-color: #4299e1;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        .message-content button:hover {
+            background-color: #3182ce;
+            transform: translateY(-2px);
+        }
+        .message-content button:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>WebXonix</h1>
+        <canvas id="gameCanvas" width="600" height="400"></canvas>
+        <div class="game-info">
+            <span>Score: <span id="scoreDisplay">0</span></span>
+            <span>Lives: <span id="livesDisplay">3</span></span>
+            <span>Filled: <span id="filledPercentageDisplay">0.00%</span></span>
+        </div>
+        <div class="control-buttons">
+            <button id="startButton" class="control-button">Start Game</button>
+            <button id="pauseButton" class="control-button pause">Pause</button>
+            <button id="resetButton" class="control-button restart">Reset Game</button>
+            <button id="muteButton" class="control-button">Mute Sounds</button>
+        </div>
+    </div>
+
+    <!-- Message Box Modal -->
+    <div id="message-modal" class="message-modal">
+        <div class="message-content">
+            <h2 id="modal-title"></h2>
+            <p id="modal-text"></p>
+            <button id="modal-close-btn">OK</button>
+        </div>
+    </div>
+
+    <!-- Sound Elements -->
+    <audio id="move-sound" src="https://www.soundjay.com/buttons/beep-01a.mp3" preload="auto"></audio>
+    <audio id="fill-sound" src="https://www.soundjay.com/misc/camera-shutter-1.mp3" preload="auto"></audio>
+    <audio id="hit-sound" src="https://www.soundjay.com/buttons/button-10.mp3" preload="auto"></audio>
+    <audio id="gameover-sound" src="https://www.soundjay.com/human/shhh-2.mp3" preload="auto"></audio>
+    <audio id="win-sound" src="https://www.soundjay.com/buttons/beep-07a.mp3" preload="auto"></audio>
+
+
+    <script>
+        // --- Game Configuration ---
+        const GRID_COLS = 60; // 600px / 10px per cell
+        const GRID_ROWS = 40; // 400px / 10px per cell
+        const CELL_SIZE = 10; // Pixels per grid cell
+        const INITIAL_LIVES = 3;
+        const WIN_PERCENTAGE = 75; // Percentage of board to fill to win
+        const ENEMY_COUNT = 3; // Number of bouncing enemies
+        const PLAYER_SPEED = 2; // Cells per game update
+        const GAME_TICK_MS = 1000 / 30; // ~30 FPS for game logic
+
+        // Board cell states
+        const CELL_EMPTY = 0; // Unfilled, unvisited space
+        const CELL_FILLED = 1; // Filled area (safe)
+        const CELL_PATH = 2; // Player's current path
+        const CELL_WALL = 3; // Initial border walls
+
+        // --- Game State Variables ---
+        let board = [];
+        let player = {
+            x: 0, y: 0, // Grid coordinates
+            dx: 0, dy: 0, // Direction: -1, 0, or 1
+            isDrawingPath: false, // True if player is moving into empty space
+            pathCells: [] // Stores grid coordinates of the current path
+        };
+        let enemies = [];
+        let lives = INITIAL_LIVES;
+        let score = 0;
+        let filledPercentage = 0;
+        let gameIntervalId = null;
+        let gameState = 'menu'; // 'menu', 'playing', 'paused', 'gameOver', 'win'
+        let isMuted = false;
+
+        // --- DOM Elements ---
+        const gameCanvas = document.getElementById('gameCanvas');
+        const ctx = gameCanvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const livesDisplay = document.getElementById('livesDisplay');
+        const filledPercentageDisplay = document.getElementById('filledPercentageDisplay');
+        const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const resetButton = document.getElementById('resetButton');
+        const muteButton = document.getElementById('muteButton');
+
+        // Sound Elements
+        const moveSound = document.getElementById('move-sound');
+        const fillSound = document.getElementById('fill-sound');
+        const hitSound = document.getElementById('hit-sound');
+        const gameoverSound = document.getElementById('gameover-sound');
+        const winSound = document.getElementById('win-sound');
+
+        // Message Box elements
+        const messageModal = document.getElementById('message-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalText = document.getElementById('modal-text');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        // Scale canvas for high DPI displays
+        const scale = window.devicePixelRatio;
+        gameCanvas.width = GRID_COLS * CELL_SIZE * scale;
+        gameCanvas.height = GRID_ROWS * CELL_SIZE * scale;
+        ctx.scale(scale, scale);
+
+        // --- Utility Functions ---
+
+        /**
+         * Displays a custom modal message box.
+         * @param {string} title - The title of the modal.
+         * @param {string} text - The main message text.
+         * @param {boolean} isGameOver - True if it's a game over/win message (changes button text).
+         * @param {function} onClose - Callback function when close is clicked.
+         */
+        window.showMessageBox = function(title, text, isGameOver = false, onClose = null) {
+            modalTitle.textContent = title;
+            modalText.textContent = text;
+            modalCloseBtn.textContent = isGameOver ? 'Play Again' : 'OK';
+
+            messageModal.classList.add('active');
+
+            // Remove existing listeners to prevent multiple calls
+            modalCloseBtn.onclick = null;
+
+            modalCloseBtn.onclick = () => {
+                messageModal.classList.remove('active');
+                if (onClose) {
+                    onClose();
+                }
+            };
+        };
+
+        /**
+         * Plays a sound effect.
+         * @param {HTMLAudioElement} audioElem - The audio element to play.
+         */
+        function playSound(audioElem) {
+            if (!isMuted) {
+                audioElem.currentTime = 0;
+                audioElem.play().catch(e => console.warn("Audio playback failed:", e));
+            }
+        }
+
+        /**
+         * Toggles mute status for sounds.
+         */
+        function toggleMute() {
+            isMuted = !isMuted;
+            muteButton.textContent = isMuted ? 'Unmute Sounds' : 'Mute Sounds';
+        }
+
+        // --- Game Initialization & Reset ---
+
+        /**
+         * Initializes the game board, player, and enemies.
+         */
+        function initGame() {
+            // Initialize board with walls around the perimeter
+            board = Array(GRID_ROWS).fill(0).map(() => Array(GRID_COLS).fill(CELL_EMPTY));
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    if (r === 0 || r === GRID_ROWS - 1 || c === 0 || c === GRID_COLS - 1) {
+                        board[r][c] = CELL_FILLED; // Initially treat border as filled
+                    }
+                }
+            }
+
+            // Player starts at a safe corner on the border
+            player = { x: 1, y: 1, dx: 0, dy: 0, isDrawingPath: false, pathCells: [] };
+            board[player.y][player.x] = CELL_FILLED; // Player's starting cell is part of the filled area
+
+            // Initialize enemies
+            enemies = [];
+            for (let i = 0; i < ENEMY_COUNT; i++) {
+                // Spawn enemies in empty, non-border areas
+                let ex, ey;
+                do {
+                    ex = Math.floor(Math.random() * (GRID_COLS - 2)) + 1;
+                    ey = Math.floor(Math.random() * (GRID_ROWS - 2)) + 1;
+                } while (board[ey][ex] !== CELL_EMPTY); // Ensure enemy spawns in empty space
+
+                enemies.push({
+                    x: ex * CELL_SIZE + CELL_SIZE / 2, // Pixel coordinates for smooth movement
+                    y: ey * CELL_SIZE + CELL_SIZE / 2,
+                    dx: (Math.random() > 0.5 ? 1 : -1) * 2, // Random initial speed
+                    dy: (Math.random() > 0.5 ? 1 : -1) * 2,
+                    radius: CELL_SIZE * 0.4 // Enemy size
+                });
+            }
+
+            lives = INITIAL_LIVES;
+            score = 0;
+            filledPercentage = 0;
+            updateHUD();
+            gameState = 'menu'; // Set initial state to menu
+            drawGame(); // Initial render
+        }
+
+        /**
+         * Resets the entire game to its initial state.
+         */
+        function resetGame() {
+            clearInterval(gameIntervalId);
+            gameIntervalId = null;
+            initGame();
+            pauseButton.textContent = 'Pause';
+            showMessageBox('Game Reset', 'Press Start Game to begin your adventure!');
+        }
+
+        /**
+         * Starts or resumes the game loop.
+         */
+        function startGame() {
+            if (gameState === 'playing') return; // Already playing
+
+            if (gameState === 'gameOver' || gameState === 'win') {
+                resetGame(); // Reset if game was over/won
+            }
+
+            gameState = 'playing';
+            pauseButton.textContent = 'Pause';
+            if (!gameIntervalId) {
+                gameIntervalId = setInterval(gameLoop, GAME_TICK_MS);
+            }
+            showMessageBox('Game Started!', 'Use Arrow Keys to move. Capture 75% of the board!');
+        }
+
+        /**
+         * Pauses or unpauses the game.
+         */
+        function togglePause() {
+            if (gameState === 'playing') {
+                gameState = 'paused';
+                clearInterval(gameIntervalId);
+                gameIntervalId = null;
+                pauseButton.textContent = 'Resume';
+                showMessageBox('Game Paused', 'Press Resume to continue.');
+            } else if (gameState === 'paused') {
+                gameState = 'playing';
+                pauseButton.textContent = 'Pause';
+                if (!gameIntervalId) {
+                    gameIntervalId = setInterval(gameLoop, GAME_TICK_MS);
+                }
+            } else if (gameState === 'menu') {
+                // If in menu, pause button acts as a start button
+                startGame();
+            }
+        }
+
+        // --- Game Loop and Updates ---
+
+        /**
+         * The main game loop function.
+         */
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+
+            updatePlayer();
+            updateEnemies();
+            checkCollisions();
+            drawGame();
+            updateHUD();
+        }
+
+        /**
+         * Updates player position and path.
+         */
+        function updatePlayer() {
+            const newX = player.x + player.dx * PLAYER_SPEED;
+            const newY = player.y + player.dy * PLAYER_SPEED;
+
+            // Check if player is trying to move
+            if (player.dx === 0 && player.dy === 0) return;
+
+            // Boundary check for next position
+            if (newX < 0 || newX >= GRID_COLS || newY < 0 || newY >= GRID_ROWS) {
+                // Player hit outer boundary. If drawing path, this is a loss.
+                if (player.isDrawingPath) {
+                    gameOver('Hit boundary while drawing path!');
+                }
+                player.dx = 0; player.dy = 0; // Stop movement
+                return;
+            }
+
+            const nextCellType = board[newY][newX];
+
+            // Moving into empty space
+            if (nextCellType === CELL_EMPTY) {
+                if (!player.isDrawingPath) { // Just started drawing
+                    player.isDrawingPath = true;
+                    player.pathCells = [{ x: player.x, y: player.y }];
+                    board[player.y][player.x] = CELL_PATH;
+                    playSound(moveSound);
+                }
+                // Add current position to path
+                player.pathCells.push({ x: newX, y: newY });
+                board[newY][newX] = CELL_PATH;
+                player.x = newX;
+                player.y = newY;
+            }
+            // Moving back onto a filled/wall area from drawing a path
+            else if (nextCellType === CELL_FILLED || nextCellType === CELL_WALL) {
+                if (player.isDrawingPath) {
+                    // Completed a loop, fill the area!
+                    fillArea();
+                    player.isDrawingPath = false;
+                    player.pathCells = [];
+                    player.dx = 0; player.dy = 0; // Stop player movement
+                    playSound(fillSound);
+                }
+                // If player is already on filled area and not drawing, just update position if valid
+                player.x = newX;
+                player.y = newY;
+            }
+            // Moving into own path (forbidden) or already existing path (shouldn't happen with proper logic)
+            else if (nextCellType === CELL_PATH) {
+                // This means player tried to cross own path - game over
+                gameOver('Crossed your own path!');
+            }
+            // If already on a filled area, just update position (dx,dy could be 0 from previous tick)
+            else {
+                player.x = newX;
+                player.y = newY;
+            }
+        }
+
+
+        /**
+         * Updates enemy positions and handles bouncing.
+         */
+        function updateEnemies() {
+            enemies.forEach(enemy => {
+                enemy.x += enemy.dx;
+                enemy.y += enemy.dy;
+
+                // Collision with canvas edges / filled areas
+                const gridX = Math.floor(enemy.x / CELL_SIZE);
+                const gridY = Math.floor(enemy.y / CELL_SIZE);
+
+                let collidedX = false;
+                let collidedY = false;
+
+                // Check horizontal collision (next cell left/right)
+                const nextGridX_left = Math.floor((enemy.x + enemy.dx - enemy.radius) / CELL_SIZE);
+                const nextGridX_right = Math.floor((enemy.x + enemy.dx + enemy.radius) / CELL_SIZE);
+                const nextGridY_top = Math.floor((enemy.y - enemy.radius) / CELL_SIZE);
+                const nextGridY_bottom = Math.floor((enemy.y + enemy.radius) / CELL_SIZE);
+
+                if (enemy.dx < 0) { // Moving left
+                    if (nextGridX_left < 0 || board[gridY][nextGridX_left] === CELL_FILLED || board[gridY][nextGridX_left] === CELL_WALL) {
+                        collidedX = true;
+                    }
+                } else if (enemy.dx > 0) { // Moving right
+                    if (nextGridX_right >= GRID_COLS || board[gridY][nextGridX_right] === CELL_FILLED || board[gridY][nextGridX_right] === CELL_WALL) {
+                        collidedX = true;
+                    }
+                }
+
+                // Check vertical collision (next cell up/down)
+                const nextGridY_top_move = Math.floor((enemy.y + enemy.dy - enemy.radius) / CELL_SIZE);
+                const nextGridY_bottom_move = Math.floor((enemy.y + enemy.dy + enemy.radius) / CELL_SIZE);
+                const nextGridX_left_static = Math.floor((enemy.x - enemy.radius) / CELL_SIZE);
+                const nextGridX_right_static = Math.floor((enemy.x + enemy.radius) / CELL_SIZE);
+
+                if (enemy.dy < 0) { // Moving up
+                    if (nextGridY_top_move < 0 || board[nextGridY_top_move][gridX] === CELL_FILLED || board[nextGridY_top_move][gridX] === CELL_WALL) {
+                        collidedY = true;
+                    }
+                } else if (enemy.dy > 0) { // Moving down
+                    if (nextGridY_bottom_move >= GRID_ROWS || board[nextGridY_bottom_move][gridX] === CELL_FILLED || board[nextGridY_bottom_move][gridX] === CELL_WALL) {
+                        collidedY = true;
+                    }
+                }
+
+                if (collidedX) enemy.dx *= -1;
+                if (collidedY) enemy.dy *= -1;
+
+                // Ensure enemies stay within bounds after bounce
+                enemy.x = Math.max(enemy.radius, Math.min(enemy.x, GRID_COLS * CELL_SIZE - enemy.radius));
+                enemy.y = Math.max(enemy.radius, Math.min(enemy.y, GRID_ROWS * CELL_SIZE - enemy.radius));
+            });
+        }
+
+
+        /**
+         * Checks for player-enemy collisions.
+         */
+        function checkCollisions() {
+            const playerPixelX = player.x * CELL_SIZE + CELL_SIZE / 2;
+            const playerPixelY = player.y * CELL_SIZE + CELL_SIZE / 2;
+            const playerHitboxRadius = CELL_SIZE * 0.4; // Small hitbox for player dot
+
+            for (const enemy of enemies) {
+                const dx = playerPixelX - enemy.x;
+                const dy = playerPixelY - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < playerHitboxRadius + enemy.radius) {
+                    // Collision occurred!
+                    if (player.isDrawingPath) {
+                        gameOver('Hit by enemy while drawing path!');
+                        playSound(hitSound);
+                        return;
+                    } else if (board[player.y][player.x] === CELL_EMPTY) {
+                        // Player got hit while on an empty cell (shouldn't happen much if moving from border)
+                        gameOver('Hit by enemy in empty space!');
+                        playSound(hitSound);
+                        return;
+                    }
+                }
+
+                // Also check if any part of the player's *path* was hit
+                if (player.isDrawingPath) {
+                    for (const pathCell of player.pathCells) {
+                        const pathCellPixelX = pathCell.x * CELL_SIZE + CELL_SIZE / 2;
+                        const pathCellPixelY = pathCell.y * CELL_SIZE + CELL_SIZE / 2;
+                        const pathDx = pathCellPixelX - enemy.x;
+                        const pathDy = pathCellPixelY - enemy.y;
+                        const pathDistance = Math.sqrt(pathDx * pathDx + pathDy * pathDy);
+
+                        if (pathDistance < playerHitboxRadius + enemy.radius) {
+                            gameOver('Enemy crossed your path!');
+                            playSound(hitSound);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * Fills the enclosed area after a path is completed.
+         * This uses a simplified flood-fill approach.
+         */
+        function fillArea() {
+            // Step 1: Mark player's path as filled
+            player.pathCells.forEach(p => {
+                board[p.y][p.x] = CELL_FILLED;
+            });
+
+            // Step 2: Flood fill from a known "outside" point to identify unreachable empty spaces
+            // Create a copy of the board for flood fill, marking filled areas as walls for the fill algorithm
+            const fillBoard = JSON.parse(JSON.stringify(board));
+            const visited = Array(GRID_ROWS).fill(0).map(() => Array(GRID_COLS).fill(false));
+            const queue = [];
+
+            // Find a guaranteed outside point (e.g., top-left corner)
+            // Start flood-fill from an empty cell that is reachable from the outside border.
+            // This fills all "outside" empty cells.
+            for (let r = 0; r < GRID_ROWS; r++) {
+                if (fillBoard[r][0] === CELL_EMPTY && !visited[r][0]) {
+                    queue.push({ x: 0, y: r });
+                    visited[r][0] = true;
+                }
+                if (fillBoard[r][GRID_COLS - 1] === CELL_EMPTY && !visited[r][GRID_COLS - 1]) {
+                    queue.push({ x: GRID_COLS - 1, y: r });
+                    visited[r][GRID_COLS - 1] = true;
+                }
+            }
+             for (let c = 0; c < GRID_COLS; c++) {
+                if (fillBoard[0][c] === CELL_EMPTY && !visited[0][c]) {
+                    queue.push({ x: c, y: 0 });
+                    visited[0][c] = true;
+                }
+                if (fillBoard[GRID_ROWS - 1][c] === CELL_EMPTY && !visited[GRID_ROWS - 1][c]) {
+                    queue.push({ x: c, y: GRID_ROWS - 1 });
+                    visited[GRID_ROWS - 1][c] = true;
+                }
+            }
+
+
+            while (queue.length > 0) {
+                const { x, y } = queue.shift();
+
+                const neighbors = [
+                    { nx: x + 1, ny: y }, { nx: x - 1, ny: y },
+                    { nx: x, ny: y + 1 }, { nx: x, ny: y - 1 }
+                ];
+
+                for (const { nx, ny } of neighbors) {
+                    if (nx >= 0 && nx < GRID_COLS && ny >= 0 && ny < GRID_ROWS &&
+                        fillBoard[ny][nx] === CELL_EMPTY && !visited[ny][nx]) {
+                        visited[ny][nx] = true;
+                        queue.push({ x: nx, y: ny });
+                    }
+                }
+            }
+
+            // Step 3: Any remaining CELL_EMPTY cells that were NOT visited are enclosed and should be filled.
+            let newlyFilledCellsCount = 0;
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    if (board[r][c] === CELL_EMPTY && !visited[r][c]) {
+                        board[r][c] = CELL_FILLED; // Mark as filled
+                        newlyFilledCellsCount++;
+                    }
+                }
+            }
+
+            // Step 4: Destroy enemies caught in the newly filled area.
+            enemies = enemies.filter(enemy => {
+                const enemyGridX = Math.floor(enemy.x / CELL_SIZE);
+                const enemyGridY = Math.floor(enemy.y / CELL_SIZE);
+                // If enemy is inside a newly filled cell, remove it
+                if (board[enemyGridY] && board[enemyGridY][enemyGridX] === CELL_FILLED) {
+                    score += 100; // Points for destroying enemy
+                    return false; // Remove this enemy
+                }
+                return true; // Keep enemy
+            });
+
+            // Update score based on filled area
+            score += newlyFilledCellsCount;
+
+            // Recalculate filled percentage
+            let filledCount = 0;
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    if (board[r][c] === CELL_FILLED) {
+                        filledCount++;
+                    }
+                }
+            }
+            filledPercentage = (filledCount / (GRID_COLS * GRID_ROWS)) * 100;
+
+            checkWinCondition();
+        }
+
+        /**
+         * Checks if the win condition (percentage filled) is met.
+         */
+        function checkWinCondition() {
+            if (filledPercentage >= WIN_PERCENTAGE) {
+                winGame();
+            }
+        }
+
+        /**
+         * Handles game over state.
+         * @param {string} reason - The reason for game over.
+         */
+        function gameOver(reason) {
+            if (gameState === 'gameOver') return; // Prevent multiple game over calls
+
+            gameState = 'gameOver';
+            clearInterval(gameIntervalId);
+            gameIntervalId = null;
+            playSound(gameoverSound);
+
+            lives--; // Decrement life
+            updateHUD();
+
+            if (lives <= 0) {
+                showMessageBox('Game Over!', `You ran out of lives!\n${reason}`, true, () => {
+                    resetGame(); // Reset on "Play Again"
+                });
+            } else {
+                showMessageBox('Lost a Life!', `${reason}\nLives left: ${lives}`, false, () => {
+                    // Reset player and path for next life, keep filled board
+                    player = { x: 1, y: 1, dx: 0, dy: 0, isDrawingPath: false, pathCells: [] };
+                    board[player.y][player.x] = CELL_FILLED; // Ensure player starts on filled
+                    // Clear any leftover paths
+                    for (let r = 0; r < GRID_ROWS; r++) {
+                        for (let c = 0; c < GRID_COLS; c++) {
+                            if (board[r][c] === CELL_PATH) board[r][c] = CELL_EMPTY;
+                        }
+                    }
+                    gameState = 'playing'; // Resume game
+                    gameIntervalId = setInterval(gameLoop, GAME_TICK_MS);
+                });
+            }
+        }
+
+        /**
+         * Handles game win state.
+         */
+        function winGame() {
+            gameState = 'win';
+            clearInterval(gameIntervalId);
+            gameIntervalId = null;
+            playSound(winSound);
+            showMessageBox('You Won!', `Congratulations! You filled ${filledPercentage.toFixed(2)}% of the board!\nYour Score: ${score}`, true, () => {
+                resetGame(); // Reset on "Play Again"
+            });
+        }
+
+        // --- Drawing Functions ---
+
+        /**
+         * Draws the entire game state onto the canvas.
+         */
+        function drawGame() {
+            ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+            // Draw board cells
+            for (let r = 0; r < GRID_ROWS; r++) {
+                for (let c = 0; c < GRID_COLS; c++) {
+                    let color = '#000'; // Empty
+
+                    if (board[r][c] === CELL_FILLED) {
+                        color = '#006400'; // Dark Green for filled area
+                    } else if (board[r][c] === CELL_PATH) {
+                        color = '#ADD8E6'; // Light Blue for player's path
+                    }
+
+                    if (board[r][c] !== CELL_EMPTY) {
+                        ctx.fillStyle = color;
+                        ctx.fillRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                        ctx.strokeStyle = '#333';
+                        ctx.lineWidth = 0.5;
+                        ctx.strokeRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    }
+                }
+            }
+
+            // Draw enemies
+            enemies.forEach(enemy => {
+                ctx.fillStyle = '#FF4500'; // OrangeRed for enemies
+                ctx.beginPath();
+                ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#8B0000';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+
+            // Draw player (a square on their current grid cell)
+            ctx.fillStyle = '#FFFF00'; // Yellow player
+            ctx.fillRect(player.x * CELL_SIZE, player.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            ctx.strokeStyle = '#8B8B00';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(player.x * CELL_SIZE, player.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        }
+
+        /**
+         * Updates the HUD elements.
+         */
+        function updateHUD() {
+            scoreDisplay.textContent = score;
+            livesDisplay.textContent = lives;
+            filledPercentageDisplay.textContent = filledPercentage.toFixed(2) + '%';
+        }
+
+        // --- Event Listeners ---
+
+        // Keyboard controls for player movement
+        document.addEventListener('keydown', (e) => {
+            if (gameState !== 'playing') return;
+
+            let newDx = player.dx;
+            let newDy = player.dy;
+
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    newDx = 0; newDy = -1;
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    newDx = 0; newDy = 1;
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    newDx = -1; newDy = 0;
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    newDx = 1; newDy = 0;
+                    break;
+            }
+
+            // Prevent reversing direction directly into own path
+            if (player.isDrawingPath && player.pathCells.length > 1) {
+                const lastPathCell = player.pathCells[player.pathCells.length - 1];
+                const secondLastPathCell = player.pathCells[player.pathCells.length - 2];
+                if (lastPathCell.x + newDx === secondLastPathCell.x && lastPathCell.y + newDy === secondLastPathCell.y) {
+                    // Trying to reverse direction back into the immediate previous path cell
+                    return;
+                }
+            }
+
+            // Only allow movement if changing direction or starting to move
+            if (newDx !== player.dx || newDy !== player.dy) {
+                player.dx = newDx;
+                player.dy = newDy;
+            }
+        });
+
+        // Button Event Listeners
+        startButton.addEventListener('click', startGame);
+        pauseButton.addEventListener('click', togglePause);
+        resetButton.addEventListener('click', resetGame);
+        muteButton.addEventListener('click', toggleMute);
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initGame(); // Set up initial game state and display menu
+            // Preload sounds
+            moveSound.load();
+            fillSound.load();
+            hitSound.load();
+            gameoverSound.load();
+            winSound.load();
+            showMessageBox('Welcome to WebXonix!', 'The classic arcade game. Capture 75% of the board to win!\n\nUse Arrow Keys to move. Avoid enemies. If you hit an enemy while drawing a path, you lose a life.', false, () => {
+                 // After closing intro message, the game is in 'menu' state.
+                 // User needs to click Start Game explicitly.
+            });
+        });
+    </script>
+</body>
+</html>
