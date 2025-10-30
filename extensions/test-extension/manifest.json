@@ -1,0 +1,11 @@
+{
+    "name": "Test Extension",
+    "version": "1.0.0",
+    "description": "My First Chrome Extension",
+    "manifest_version": 3,
+    "author": "Klingri",
+    "action":{
+        "default_popup": "index.html",
+        "default_title": "Test Extension"
+    }
+}
