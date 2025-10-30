@@ -1,6 +1,6 @@
-## 🚀 HTML-Sites: A List of HTML sites
+## 🚀 HTML: A List of HTML sites & extensions
 
-A simple, fast, list of websites. This is a great list of websites for when you don't have internet or are learning HTML, CSS and JS!
+A simple, fast, list of websites & extensions. This is a great list of websites & extensions for when you don't have internet or are learning HTML, CSS and JS!
 
 # ✨ Features
 
